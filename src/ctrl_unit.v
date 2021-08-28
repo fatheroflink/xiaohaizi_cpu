@@ -1,35 +1,36 @@
 `include "defines.h"
 
 module ctrl_unit(
-    input clk,
-    input rst,
-    input [`OPCODESIZE-1:0] opcode,
-    input zf,
-    output reg pc_sel,
-    output reg pc_we,
-    output ram_addr_sel,
-    output ram_we,
-    output reg ir_we,
-    output reg zf_we,
-    output reg [`ALUOPSIZE-1:0] alu_op,
-    output reg alu_a_sel,
-    output reg alu_b_sel,
-    output reg acc_we,
-    output reg halt,
+    input clk,                          //时钟信号
+    input rst,                          //复位信号
+    input [`OPCODESIZE-1:0] opcode,     //操作码
+    input zf,                           //ALU结果是否为0
+    output reg pc_sel,                  //PC的选择信号
+    output reg pc_we,                   //PC的写使能信号
+    output ram_addr_sel,                //RAM地址的选择信号
+    output ram_we,                      //RAM的写使能信号
+    output reg ir_we,                   //IR的写使能信号
+    output reg zf_we,                   //ZF寄存器的写使能信号
+    output reg [`ALUOPSIZE-1:0] alu_op, //ALU做何运算的控制信号
+    output reg alu_a_sel,               //ALU的输入A的选择信号
+    output reg alu_b_sel,               //ALU的输入B的选择信号
+    output reg acc_we,                  //累加器的写使能信号
+    output reg halt,                    //停止执行信号
 
-    input ack,
-    output reg hello,
+    input ack,                          //数据是否已返回
+    output reg hello,                   //是否要发起读/写操作
 
     output reg int_ins, //中断指令
     output reg not_exists_ins   //未知指令
 );
-    reg state;
+    reg state;  //CPU状态寄存器
 
     /**内部信号*/
     reg access_ram_ins;
     reg acc_we_tmp;
     reg ram_we_tmp;
 
+    //CPU状态寄存器的状态机
     always @(posedge clk or posedge rst) begin
         if (rst == 1)
             state <= `CPU_STATE_FETCH;
@@ -58,6 +59,7 @@ module ctrl_unit(
     assign ram_addr_sel = state;
     // assign zf_we = state;
 
+    //根据CPU状态，生成各种WE信号
     always @(*) begin
         ir_we = ~state;
         pc_we = state;
@@ -72,6 +74,7 @@ module ctrl_unit(
         end
     end
 
+    //根据CPU状态，生成hello信号
     always @(*) begin
         hello = 0;
         case (state)
@@ -86,10 +89,7 @@ module ctrl_unit(
 
     end
 
-
-
-
-
+    //指令解码器
     always @(*) begin
         pc_sel = 0;
         // pc_we = 0;
@@ -186,6 +186,5 @@ module ctrl_unit(
     end
 
     assign ram_we = state == 1 ? ram_we_tmp: 0;
-    // assign acc_we = state == 1 ? acc_we_tmp: 0;
 
 endmodule

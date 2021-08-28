@@ -1,5 +1,8 @@
 `include "defines.h"
 
+/**
+顶层模块
+*/
 module my_cpu_5
     (
         input 			key0,				//FPGA开发板上RESET键，默认为逻辑1
@@ -7,16 +10,16 @@ module my_cpu_5
         input 			key2,				//FPGA开发板上KEY2键，默认为逻辑1
         input 			key3,				//FPGA开发板上KEY3键，默认为逻辑1
         input 			clk,				//FPGA开发板上50M时钟信号
-        input  [3:0]	key_in_y,		//用于外接矩阵键盘
-        output [3:0]	key_out_x,		//用于外接矩阵键盘
-        output [3:0] 	led,				//FPGA开发板上LED3~LED0
-        output [5:0]   seg_sel,			//用于6位数码管显示
-        output [7:0]	seg_data,		//用于6位数码管显示
-        output [15:0]	led_out			//外接16个LED灯
-        //output 			c_out
+        input  [3:0]	key_in_y,		    //用于外接矩阵键盘
+        output [3:0]	key_out_x,		    //用于外接矩阵键盘
+        output [3:0] 	led,			    //FPGA开发板上LED3~LED0
+        output [5:0]   seg_sel,			    //用于6位数码管显示
+        output [7:0]	seg_data,		    //用于6位数码管显示
+        output [15:0]	led_out			    //外接16个LED灯
     );
 
-    wire [16:1] keys;	//矩阵键盘的16个按键
+    //矩阵键盘的16个按键
+    wire [16:1] keys;
     key_converter u_key_converter(
         .clk(clk),
         .rst_n(key0),
@@ -25,6 +28,7 @@ module my_cpu_5
         .keys(keys)
     );
 
+    //LED显示屏
     wire [`WORDSIZE - 1 : 0] digit_in;
     digits_show u_digits_show(
         .in(digit_in),
@@ -33,11 +37,14 @@ module my_cpu_5
         .seg_data(seg_data)
     );
 
+    //用~key1作为时钟，方便观察
     wire clock;
     assign clock = ~key1;
 
+    //用~key0作为复位信号，方便操作
     wire rst;
     assign rst = ~key0;
+
 
     wire [`WORDSIZE-1:0] cpu_data_i;
     wire cpu_we_o;
@@ -46,6 +53,7 @@ module my_cpu_5
     wire cpu_hello_o;
     wire cpu_ack_i;
 
+    //总线支持1主4从，将2个内存控制器mc0和mc1作为从设备连接到总线
     wire [`WORDSIZE-1:0] mc_data_i;
     wire mc_we_i;
     wire [`ADDRSIZE-1:0] mc_addr_i;
@@ -114,6 +122,7 @@ module my_cpu_5
         .mc_ack_o(mc1_ack_o)
     );
 
+    //LED显示屏中展示CPU的数据输出
     assign digit_in = cpu_data_o;
 
     assign led[0] = key0;
